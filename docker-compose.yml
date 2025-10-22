@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9022:9022" # Using 9022 to avoid conflict, update KAFKA_ADVERTISED_LISTENERS
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9022,PLAINTEXT_INTERNAL://kafka:29092 # Updated port
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  dirty_producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: dirty_producer
+    depends_on:
+      - kafka
+    volumes:
+      - ./producer:/app/producer
+    # Add environment variable for the new Kafka port
+    environment:
+      KAFKA_BROKER: 'kafka:29092' # Internal Docker network port is unchanged
+
+  cleaning_pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    container_name: cleaning_pipeline
+    depends_on:
+      - kafka
+      - mongodb
+    volumes:
+      - ./consumer:/app/consumer
+    # Add environment variable for the new Kafka port
+    environment:
+      KAFKA_BROKER: 'kafka:29092' # Internal Docker network port is unchanged
+      MONGO_URI: 'mongodb://mongodb:27017/'
+
+  transform_pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.transform
+    container_name: transform_pipeline
+    depends_on:
+      - mongodb
+      - cleaning_pipeline # Waits for the consumer to start
+    volumes:
+      - ./consumer:/app/consumer
+    environment:
+      MONGO_URI: 'mongodb://mongodb:27017/'
+
+  feature_engineering:
+    build:
+      context: .
+      dockerfile: Dockerfile.feature
+    container_name: feature_engineering
+    depends_on:
+      - mongodb
+      - transform_pipeline # Waits for the transform to start
+    volumes:
+      - ./consumer:/app/producer # <-- This is the only volume it needs
+    environment:
+      MONGO_URI: 'mongodb://mongodb:27017/'
+
+volumes:
+  mongo-data:
+
+

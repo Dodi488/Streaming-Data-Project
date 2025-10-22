@@ -1,0 +1,12 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY consumer/ ./consumer/
+
+# This container runs the transform script in a loop
+ CMD ["/bin/sh", "-c", "while true; do python -u consumer/transform_pipeline.py; echo 'Transform sleeping for 60s...'; sleep 60; done"]
+# CMD ["python3", "-u", "consumer/transform_pipeline.py"]

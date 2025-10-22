@@ -1,0 +1,12 @@
+# For Kafka and MongoDB interaction
+kafka-python==2.0.2
+pymongo==4.3.3
+
+# For data generation and manipulation
+Faker==19.3.1
+pandas==2.0.3
+
+# For data analysis and visualization
+matplotlib==3.7.3
+seaborn==0.12.2
+notebook==7.0.6 # For running the .ipynb notebook

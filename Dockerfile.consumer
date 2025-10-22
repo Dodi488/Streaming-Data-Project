@@ -1,0 +1,11 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY consumer/ ./consumer/
+
+# This command will run all three scripts in order
+CMD python -u consumer/cleaning_consumer.py &&     python -u consumer/transform_pipeline.py &&     python -u consumer/feature_engineering.py
