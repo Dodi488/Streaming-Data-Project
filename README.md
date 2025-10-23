@@ -43,6 +43,15 @@ The cleaning pipeline implements the following logic:
 ## Data Quality Improvement Summary
 The cleaning pipeline significantly improves data quality. Below is a comparison of the `value` distribution and `platform` categories before and after processing.
 
+**Missing Values Comparison**
+![Missing Values Comparison](./reports/visuals/01_missing_values_comparison.png)
+
+**Value Distributions**
+![Value Distributions](./reports/visuals/02_value_distributions.png)
+
+**Time Series Analysis**
+![Time Series Analysis](./reports/visuals/03_time_series_analysis.png)
+
 **Pipeline Flow:**
 ![Pipeline Flow Diagram](./reports/visuals/04_pipeline_flow.png)
 
